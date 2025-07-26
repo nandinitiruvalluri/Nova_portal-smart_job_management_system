@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Post Job - Admin | Smart Job Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f4f6f9;
+    }
+    .form-container {
+      max-width: 700px;
+      margin: 60px auto;
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h3 class="text-center mb-4">📝 Post a New Job</h3>
+
+    <div class="alert alert-success d-none" id="successAlert"></div>
+    <div class="alert alert-danger d-none" id="errorAlert"></div>
+
+    <form id="jobForm">
+      <div class="mb-3">
+        <label class="form-label">Job Title</label>
+        <input type="text" class="form-control" id="title" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Company</label>
+        <input type="text" class="form-control" id="company" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input type="text" class="form-control" id="location" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Salary (in numbers)</label>
+        <input type="text" class="form-control" id="salary" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" id="description" rows="4" required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">🚀 Post Job</button>
+      <div class="mt-3 text-center">
+        <a href="admin-dashboard.html">← Back to Dashboard</a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    const successAlert = document.getElementById("successAlert");
+    const errorAlert = document.getElementById("errorAlert");
+
+    // Redirect if not ADMIN or not logged in
+    if (!token || role !== "ADMIN") {
+      window.location.href = "admin-login.html";
+    }
+
+    document.getElementById("jobForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const salaryInput = document.getElementById("salary").value.trim();
+
+      // Salary should be a number string
+      if (!salaryInput || isNaN(salaryInput)) {
+        errorAlert.textContent = "❌ Salary must be a valid number.";
+        errorAlert.classList.remove("d-none");
+        successAlert.classList.add("d-none");
+        return;
+      }
+
+      const jobData = {
+        title: document.getElementById("title").value.trim(),
+        company: document.getElementById("company").value.trim(),
+        location: document.getElementById("location").value.trim(),
+        salary: salaryInput, // Keep as string
+        description: document.getElementById("description").value.trim()
+      };
+
+      try {
+        const res = await fetch("/api/jobs", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(jobData)
+        });
+
+        if (res.ok) {
+          successAlert.textContent = "✅ Job posted successfully!";
+          successAlert.classList.remove("d-none");
+          errorAlert.classList.add("d-none");
+          document.getElementById("jobForm").reset();
+        } else {
+          const data = await res.json();
+          throw new Error(data.message || "Something went wrong.");
+        }
+
+      } catch (err) {
+        errorAlert.textContent = `❌ ${err.message}`;
+        errorAlert.classList.remove("d-none");
+        successAlert.classList.add("d-none");
+      }
+    });
+  </script>
+
+</body>
+</html>

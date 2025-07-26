@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Browse Jobs - Smart Job Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: #f8f9fa;
+    }
+    .container {
+      margin-top: 40px;
+    }
+    .job-card {
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+      background: white;
+    }
+    .alert {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2 class="mb-4 text-center">Available Job Openings</h2>
+
+    <div class="alert alert-danger" id="errorMsg"></div>
+
+    <div id="jobList"></div>
+  </div>
+
+  <script>
+    const jobList = document.getElementById("jobList");
+    const errorMsg = document.getElementById("errorMsg");
+
+    async function fetchJobs() {
+      try {
+        const response = await fetch("http://localhost:8080/api/jobs");
+        if (!response.ok) throw new Error("Failed to load jobs");
+
+        const jobs = await response.json();
+
+        if (jobs.length === 0) {
+          jobList.innerHTML = "<p class='text-center'>No jobs found.</p>";
+          return;
+        }
+
+        jobList.innerHTML = "";
+
+        jobs.forEach(job => {
+          if (!job.title || !job.company || !job.location || !job.description) return; // skip incomplete
+
+          const jobCard = document.createElement("div");
+          jobCard.className = "job-card";
+
+          jobCard.innerHTML = `
+            <h5>${job.title}</h5>
+            <p><strong>Company:</strong> ${job.company}</p>
+            <p><strong>Location:</strong> ${job.location}</p>
+            <p><strong>Description:</strong> ${job.description}</p>
+            <button class="btn btn-primary" onclick="applyJob(${job.id})">Apply Now</button>
+          `;
+
+          jobList.appendChild(jobCard);
+        });
+
+      } catch (err) {
+        errorMsg.style.display = "block";
+        errorMsg.innerText = "❌ Could not fetch job listings. Please try again.";
+      }
+    }
+
+    function applyJob(jobId) {
+      localStorage.setItem("selectedJobId", jobId);
+      window.location.href = "apply-job.html";
+    }
+
+    fetchJobs();
+  </script>
+
+</body>
+</html>
